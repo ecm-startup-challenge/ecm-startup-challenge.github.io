@@ -4,7 +4,8 @@
   "description": "Can you maximze WAU?",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify lib/browser.js -o www/bundle.js"
   },
   "author": "Chris Walker <chris@thechriswalker.net>",
   "license": "MIT",
@@ -14,6 +15,12 @@
   },
   "devDependencies": {
     "browserify": "~8.1.0",
-    "react-tools": "~0.12.2"
+    "react-tools": "~0.12.2",
+    "reactify": "~0.17.1"
+  },
+  "browserify": {
+    "transform": [
+        ["reactify", {"es6": true}]
+    ]
   }
 }

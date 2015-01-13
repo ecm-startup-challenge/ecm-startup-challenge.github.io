@@ -9,7 +9,8 @@
   "author": "Chris Walker <chris@thechriswalker.net>",
   "license": "MIT",
   "dependencies": {
-    "react": "~0.12.2"
+    "react": "~0.12.2",
+    "xcharts": "~0.3.0"
   },
   "devDependencies": {
     "browserify": "~8.1.0",

@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+"use strict";
+var path = require("path");
+
+function tryToLoad(m){
+	try{
+		return require(m);
+	}catch(err){
+		console.error("Cannot Load Solution Module: "+m);
+		console.error("");
+		console.error(err.stack);
+		process.exit(2);
+	}
+}
+
+var solutionModule = tryToLoad(path.resolve(process.cwd(), process.argv[2]));
+
+var simulate = require("../index");
+
+var result = simulate(solutionModule);
+
+console[result.Error ? "error": "log"](result);
+process.exit(result.Error ? 1 : 0);

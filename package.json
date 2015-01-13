@@ -1,0 +1,11 @@
+{
+  "name": "startup-challenge",
+  "version": "1.0.0",
+  "description": "Can you maximze WAU?",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chris Walker <chris@thechriswalker.net>",
+  "license": "MIT"
+}

@@ -6,11 +6,17 @@ var React = require('react'),
 
 var App = React.createClass({displayName: "App",
     render: function(){
+
+        console.log(this.props);
+
         return React.createElement("div", null, 
-            React.createElement(InputForm, null), 
+            React.createElement(InputForm, {model: this.props.data.model, num: 10, onChange: this.handleChange}), 
             React.createElement(WAUChart, null), 
             React.createElement(ResultsTable, null)
             );
+    },
+    handleChange: function(data){
+
     }
 });
 
@@ -36,20 +42,139 @@ var Input = React.createClass({displayName: "Input",
     }
 });
 
-var InputForm = React.createClass({displayName: "InputForm",
+var EngineeringForm = React.createClass({displayName: "EngineeringForm",
     render: function(){
-        return React.createElement("div", {className: "form"}, 
-                    React.createElement(Input, {onChange: this.onChange}), 
-                    React.createElement(Radio, {onChange: this.onChange}), 
-                    React.createElement(Checkbox, {onChange: this.onChange})
-               );
+        var numOfDev = this.props.numOfDev,
+            items = this.props.items,
+            formElements = items.map(function(item, idx){
+                var options = [];
+                for(var i=0; i < numOfDev; i++){
+                    options.push(React.createElement(Radio, {defaultChecked: item=='none', key: i, name: "Engineering."+i, value: item, title: item, onChange: this.handleChange}));
+                }
+                return React.createElement("div", {key: idx, className: "radio-group " + item}, options);
+            }, this);
+
+        return React.createElement("div", {className: "engineering-form-section"}, 
+                formElements
+                );
     },
-    onChange: function(e){
-        console.log(e);
+    handleChange: function(e){
+        var data = {
+            key: e.target.getAttribute('name'),
+            val: e.target.value
+        }
+        this.props.onChange(data);
     }
 });
 
-module.exports = InputForm;
+var MarketingForm = React.createClass({displayName: "MarketingForm",
+    render: function(){
+
+        var items = this.props.items,
+            formElements = items.map(function(item, i){
+                return React.createElement("div", {key: i, className: "checkbox-group " + item}, 
+                            React.createElement(Checkbox, {name: item, value: item, title: item, onChange: this.handleChange})
+                        )
+            }, this);
+
+
+        return React.createElement("div", {className: "marketing-form-section"}, 
+                formElements
+               )
+    },
+    handleChange: function(e){
+        var data = {
+            key: e.target.value,
+            val: e.target.checked
+        }
+        this.props.onChange(data);
+    }
+});
+
+var BudgetForm = React.createClass({displayName: "BudgetForm",
+    render: function(){
+        var defaultVal = this.props.defaultVal || 0;
+        return React.createElement("div", {className: "budget-form-section"}, 
+                    React.createElement(Input, {className: "budget-input", name: "Spend", defaultValue: defaultVal, onChange: this.handleChange})
+                )
+    },
+    handleChange: function(e){
+        var val = parseFloat(e.target.value);
+        var data = {
+            key: e.target.name,
+            val: !isNaN(val) ? val : 0
+        }
+        this.props.onChange(data);
+    }
+})
+
+var InputForm = React.createClass({displayName: "InputForm",
+    render: function(){
+
+        var model = this.props.model;
+
+        var engineeringProps = {
+            items: ['none'].concat(Object.keys(model.Engineering)),
+            numOfDev: model.DeveloperResource
+        };
+
+        var engineeringForm = React.createElement(EngineeringForm, React.__spread({},  engineeringProps, {onChange: this.onChange}));
+
+        var marketingProps = {
+            items: Object.keys(model.Marketing)
+        }
+        var marketingForm = React.createElement(MarketingForm, React.__spread({},  marketingProps, {onChange: this.onChange}));
+
+        return React.createElement("div", {className: "form-container week"}, 
+                React.createElement("form", {onSubmit: this.preventEvent}, 
+                React.createElement("span", {className: "input"}, "#", this.props.week +1), 
+                    engineeringForm, 
+                    marketingForm, 
+                    React.createElement(BudgetForm, {defaultVal: 0, onChange: this.onChange})
+                )
+               );
+    },
+    preventEvent: function(e){
+        e.preventDefault();
+    },
+    onChange: function(data){
+        data.week = this.props.week;
+        this.props.onChange(data);
+    }
+});
+
+var InputFormGroup = React.createClass({displayName: "InputFormGroup",
+    render: function(){
+        var model = this.props.model,
+            numWeeks = 10,
+            labelText = ['Week:', 'none'].concat(Object.keys(model.Engineering))
+                                .concat(Object.keys(model.Marketing))
+                                .concat('Spend'),
+            labels = labelText.map(function(label, i){
+                return React.createElement("label", {key: i}, label)
+            }),
+            forms = [];
+
+
+
+        for(var i = 0; i < numWeeks; i ++){
+            forms.push(React.createElement(InputForm, {key: i, model: model, week: i, onChange: this.handleChange}))
+        }
+
+
+        return React.createElement("div", {className: "input-form-group"}, 
+                React.createElement("div", {className: "label-container"}, 
+                labels
+                ), 
+                forms
+               )
+    },
+    handleChange: function(data){
+        console.log(data);
+    }
+})
+
+module.exports = InputFormGroup;
 },{"react":"/Development/personal/startup-challenge/node_modules/react/react.js"}],"/Development/personal/startup-challenge/lib/ResultsTable.js":[function(require,module,exports){
 var React = require('react');
 

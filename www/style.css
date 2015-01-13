@@ -1,3 +1,45 @@
 body {
     padding-top: 100px;
 }
+
+input[type=radio],
+input[type=checkbox] {
+    height: 21px;
+}
+
+.input-form-group {
+    display: table;
+}
+
+.form-container {
+    display: table-cell;
+    border-left: 1px solid #D1D2D3;
+    text-align: center;
+    margin: 0 8px;
+}
+
+.label-container {
+    text-align: right;
+}
+
+.label-container label {
+    display: block;
+}
+
+.input-form-group label,
+.input-form-group input,
+.input-form-group .input {
+    line-height: 21px;
+    margin: 0 8px;
+    margin-bottom: 5px;
+    padding: 0 4px;
+}
+
+.input-form-group .input {
+    display: inline-block;
+}
+.budget-input {
+    text-align: right;
+    max-width: 100%;
+    width: 80%;
+}

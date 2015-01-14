@@ -2,7 +2,7 @@ See: https://docs.google.com/document/d/1cBTlj0yiR3WAqNI44jlwzPdJdIUxybI572ez6Nq
 
 ## This codebase
 
-For those interesting in creating a programmatic solution, this is an example of programtic 
+For those interesting in creating a programmatic solution, this is an example of programtic
 access to the simultor, assuming it's written in the root of this directory.
 
 ```javascript
@@ -27,7 +27,7 @@ var mySolution = function(gameModel){
      * You need to determine what to spend on here.
      */
     var spend = {};
-    
+
     //do something complicated
 
     return spend;
@@ -35,7 +35,7 @@ var mySolution = function(gameModel){
 };
 
 //Now you have your solution you can run it with:
-var result = simulator.Simulate(solution);
+var result = simulator(solution);
 
 // result has result.Error (null if all good), result.States -> array of states, introspect the last one for final result!
 
@@ -44,7 +44,7 @@ var result = simulator.Simulate(solution);
  */
 var spends = [{},{}]; // fill in the gaps...
 
-var fixedResult = simulator.Simluate(fixedSolution(spends));
+var fixedResult = simulator(fixedSolution(spends));
 ```
 
-Have fun!
+# Have fun!

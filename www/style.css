@@ -24,6 +24,11 @@ input[type=checkbox] {
 
 .label-container label {
     display: block;
+    width: 290px;
+}
+
+.label h4 {
+    line-height: 20px;
 }
 
 .input-form-group label,
@@ -42,4 +47,9 @@ input[type=checkbox] {
     text-align: right;
     max-width: 100%;
     width: 80%;
+}
+
+.engineering-form-section,
+.budget-form-section {
+    margin-top: 33px;
 }

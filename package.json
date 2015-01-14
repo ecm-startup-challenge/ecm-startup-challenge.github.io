@@ -11,8 +11,8 @@
   "author": "Chris Walker <chris@thechriswalker.net>",
   "license": "MIT",
   "dependencies": {
-    "react": "~0.12.2",
-    "xcharts": "~0.3.0"
+    "chart.js": "^1.0.1",
+    "react": "~0.12.2"
   },
   "devDependencies": {
     "browserify": "~8.1.0",

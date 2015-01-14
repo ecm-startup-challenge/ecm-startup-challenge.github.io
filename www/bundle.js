@@ -1,22 +1,24 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var React = require('react'),
-    InputForm = require('./InputForm'),
-    WAUChart = require('./WAUChart'),
-    ResultsTable = require('./ResultsTable');
+	InputForm = require('./InputForm'),
+	WAUChart = require('./WAUChart'),
+	ResultsTable = require('./ResultsTable');
 
 var App = React.createClass({displayName: "App",
-    render: function(){
-        return React.createElement("div", null, 
-            React.createElement(InputForm, {
-                model: this.props.model, 
-                input: this.props.input, 
-                update: this.props.update}), 
-            React.createElement(WAUChart, {
-                output: this.props.output}), 
-            React.createElement(ResultsTable, {
-                output: this.props.output})
-        );
-    }
+	render: function(){
+		return React.createElement("div", {className: "container-fluid"}, 
+			React.createElement("h2", null, "Input"), 
+			React.createElement(InputForm, {
+				model: this.props.model, 
+				input: this.props.input, 
+				update: this.props.update}), 
+			React.createElement("h2", null, "Output"), 
+			React.createElement(WAUChart, {
+				output: this.props.output}), 
+			React.createElement(ResultsTable, {
+				output: this.props.output})
+		);
+	}
 });
 
 module.exports = App;
@@ -24,6 +26,8 @@ module.exports = App;
 "use strict";
 var React = require("react"),
 	help = require("./helpers");
+
+var NOT_ALLOCATED = "<not allocated>";
 
 var Checkbox = React.createClass({displayName: "Checkbox",render: function(){
 	return React.createElement("input", React.__spread({type: "checkbox"},  this.props));
@@ -50,8 +54,8 @@ var EngineeringForm = React.createClass({displayName: "EngineeringForm",
 				//this is selected if there is a value at data[i] and it matches item
 				//or there is no value at data[i] and item is "none"
 				for(var i=0; i < numOfDev; i++){
-					var selected = (data[i] ? data[i] === item : item === "none");
-					options.push(React.createElement(Radio, {name: ["week", week, "dev", i].join("-"), defaultChecked: selected, key: i, value: item, title: item, onChange: this.handleChange.bind(null, i, item === "none" ? undefined : item)}));
+					var selected = (data[i] ? data[i] === item : item === NOT_ALLOCATED);
+					options.push(React.createElement(Radio, {name: ["week", week, "dev", i].join("-"), defaultChecked: selected, key: i, value: item, title: item, onChange: this.handleChange.bind(null, i, item === NOT_ALLOCATED ? undefined : item)}));
 				}
 				return React.createElement("div", {key: idx, className: "radio-group " + item}, options);
 			}, this)
@@ -115,7 +119,7 @@ var InputForm = React.createClass({displayName: "InputForm",
 		var model = this.props.model,
 			data = this.props.data,
 			engineeringProps = {
-				items: ["none"].concat(Object.keys(model.Engineering)),
+			items: ["<not allocated>"].concat(Object.keys(model.Engineering)),
 				data: data.Engineering,
 				week: this.props.week,
 				numOfDev: model.DeveloperResource
@@ -143,18 +147,25 @@ var InputForm = React.createClass({displayName: "InputForm",
 	}
 });
 
+function label(isSectionHeader, baseKey, text, key){
+	var content = (isSectionHeader ? React.createElement("h4", null, text) : text);
+	return React.createElement("label", {key: baseKey+key}, content);
+}
+
 var InputFormGroup = React.createClass({displayName: "InputFormGroup",
 	render: function(){
 		var model = this.props.model,
 			numWeeks = model.Weeks,
-			labelText = ["Week:", "none"]
-				.concat(Object.keys(model.Engineering))
-				.concat(Object.keys(model.Marketing))
-				.concat("Acquisitions"),
-			labels = labelText.map(function(label, i){
-				return React.createElement("label", {key: i}, label);
-			}),
-			forms = [];
+			forms = [],
+			labels = [
+				label(false, "week", "Week", 0),
+				label(true, "section", "Engineering", 0),
+				label(false, "eng", NOT_ALLOCATED, "none")
+			]
+			.concat(Object.keys(model.Engineering).map(label.bind(null, false, "eng")))
+			.concat([label(true, "section", "Marketing", 1)])
+			.concat(Object.keys(model.Marketing).map(label.bind(null, false, "mkt")))
+			.concat([label(false, "mkt", "Acquisitions", "acq")]);
 
 		for(var i = 0; i < numWeeks; i ++){
 			forms.push(React.createElement(InputForm, {key: i, model: model, week: i, data: this.props.input[i], onChange: this.handleChange}));

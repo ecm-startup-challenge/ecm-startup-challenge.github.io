@@ -272,7 +272,7 @@ var WAUChart = React.createClass({displayName: "WAUChart",
 		if(this.props.output.Error){
 			return null;
 		}
-		return React.createElement("canvas", {style: {margin: "auto"}, width: "900", height: "300", ref: "WAUChart"});
+		return React.createElement("canvas", {style: {marginLeft: 300}, width: "900", height: "300", ref: "WAUChart"});
 	},
 	updateChart: function(){
 

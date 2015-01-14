@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Volumes/development/startup-challenge/lib/App.js":[function(require,module,exports){
 var React = require('react'),
-	InputForm = require('./InputForm'),
+    InputForm = require('./InputForm'),
+	ResetButton = require('./ResetButton'),
 	WAUChart = require('./WAUChart'),
 	ResultsTable = require('./ResultsTable');
 
@@ -8,6 +9,7 @@ var App = React.createClass({displayName: "App",
 	render: function(){
 		return React.createElement("div", {className: "container-fluid"}, 
 			React.createElement("h2", null, "Input"), 
+            React.createElement(ResetButton, null), 
 			React.createElement(InputForm, {
 				model: this.props.model, 
 				input: this.props.input, 
@@ -22,7 +24,7 @@ var App = React.createClass({displayName: "App",
 });
 
 module.exports = App;
-},{"./InputForm":"/Volumes/development/startup-challenge/lib/InputForm.js","./ResultsTable":"/Volumes/development/startup-challenge/lib/ResultsTable.js","./WAUChart":"/Volumes/development/startup-challenge/lib/WAUChart.js","react":"/Volumes/development/startup-challenge/node_modules/react/react.js"}],"/Volumes/development/startup-challenge/lib/InputForm.js":[function(require,module,exports){
+},{"./InputForm":"/Volumes/development/startup-challenge/lib/InputForm.js","./ResetButton":"/Volumes/development/startup-challenge/lib/ResetButton.js","./ResultsTable":"/Volumes/development/startup-challenge/lib/ResultsTable.js","./WAUChart":"/Volumes/development/startup-challenge/lib/WAUChart.js","react":"/Volumes/development/startup-challenge/node_modules/react/react.js"}],"/Volumes/development/startup-challenge/lib/InputForm.js":[function(require,module,exports){
 "use strict";
 var React = require("react"),
 	help = require("./helpers");
@@ -217,7 +219,25 @@ var InputFormGroup = React.createClass({displayName: "InputFormGroup",
 });
 
 module.exports = InputFormGroup;
-},{"./helpers":"/Volumes/development/startup-challenge/lib/helpers.js","react":"/Volumes/development/startup-challenge/node_modules/react/react.js"}],"/Volumes/development/startup-challenge/lib/ResultsTable.js":[function(require,module,exports){
+},{"./helpers":"/Volumes/development/startup-challenge/lib/helpers.js","react":"/Volumes/development/startup-challenge/node_modules/react/react.js"}],"/Volumes/development/startup-challenge/lib/ResetButton.js":[function(require,module,exports){
+var React = require('react');
+
+var ResetButton = React.createClass({displayName: "ResetButton",
+	render: function(){
+        return React.createElement("button", {className: "btn btn-default", onClick: this.resetLocalStorage}, "Reset")
+	},
+    resetLocalStorage: function(){
+        if(window.localStorage){
+            window.localStorage.removeItem("challenge-data");
+        }
+        if(window.location) {
+            window.location.reload();
+        }
+    }
+});
+
+module.exports = ResetButton;
+},{"react":"/Volumes/development/startup-challenge/node_modules/react/react.js"}],"/Volumes/development/startup-challenge/lib/ResultsTable.js":[function(require,module,exports){
 var React = require('react');
 
 function percent(n){

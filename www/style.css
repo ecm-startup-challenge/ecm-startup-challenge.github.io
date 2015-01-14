@@ -1,5 +1,6 @@
 body {
     padding-top: 100px;
+    min-width: 920px;
 }
 
 input[type=radio],
@@ -9,6 +10,7 @@ input[type=checkbox] {
 
 .input-form-group {
     display: table;
+    min-width: 920px;
 }
 
 .form-container {

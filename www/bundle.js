@@ -1,6 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var React = require('react'),
-    InputForm = require('./InputForm'),
+	InputForm = require('./InputForm'),
 	ResetButton = require('./ResetButton'),
 	WAUChart = require('./WAUChart'),
 	ResultsTable = require('./ResultsTable');
@@ -8,8 +8,11 @@ var React = require('react'),
 var App = React.createClass({displayName: "App",
 	render: function(){
 		return React.createElement("div", {className: "container-fluid"}, 
+			React.createElement("div", {className: "page-header"}, 
+				React.createElement("h1", null, "Maximise for Weekly Active Users (WAU) ", React.createElement("small", null, "version "+this.props.version))
+			), 
 			React.createElement("h2", null, "Input"), 
-            React.createElement(ResetButton, null), 
+			React.createElement(ResetButton, {localStorageKey: this.props.localStorageKey}), 
 			React.createElement(InputForm, {
 				model: this.props.model, 
 				input: this.props.input, 
@@ -224,16 +227,16 @@ var React = require('react');
 
 var ResetButton = React.createClass({displayName: "ResetButton",
 	render: function(){
-        return React.createElement("button", {className: "btn btn-default", onClick: this.resetLocalStorage}, "Reset")
+		return React.createElement("button", {className: "btn btn-default", onClick: this.resetLocalStorage}, "Reset");
 	},
-    resetLocalStorage: function(){
-        if(window.localStorage){
-            window.localStorage.removeItem("challenge-data");
-        }
-        if(window.location) {
-            window.location.reload();
-        }
-    }
+	resetLocalStorage: function(){
+		if(window.localStorage){
+			window.localStorage.removeItem(this.props.localStorageKey);
+		}
+		if(window.location) {
+			window.location.reload();
+		}
+	}
 });
 
 module.exports = ResetButton;
@@ -309,7 +312,7 @@ var WAUChart = React.createClass({displayName: "WAUChart",
 		if(output){
 			data.labels = output.map(function(_, weekNum){
 				return "Week #"+weekNum;
-			})
+			});
 			data.datasets[0].data = output.map(function(state){
 				return state.WAU;
 			});
@@ -334,7 +337,7 @@ var WAUChart = React.createClass({displayName: "WAUChart",
 				var dataset = this.state.chart.datasets[0].points;
 				this.getChartData(newProps).datasets[0].data.forEach(function(value, idx){
 					dataset[idx].value = value;
-				})
+				});
 				this.state.chart.update();
 			}else{
 				this.setState({chart: this.newChart(newProps)});
@@ -357,9 +360,13 @@ var simulator = require("./simulator"),
 	model = require("./model"),
 	App = require("./App");
 
-function init(appContainerDOMNode){
-	var appProps = {
-			model: model,
+function init(appContainerDOMNode, version){
+	var theModel = model({version: version}),
+		localStorageKey = "challenge-data" + ((version > 1) ? (":v:"+version) : ""),
+		appProps = {
+			version: version,
+			localStorageKey: localStorageKey,
+			model: theModel,
 			input: getLocalDataOrDefault(),
 			output: null,
 			update: function(){
@@ -375,16 +382,16 @@ function init(appContainerDOMNode){
 	//run the simulation
 	function updateResults(){
 		if(window.localStorage){
-			window.localStorage.setItem("challenge-data", JSON.stringify(appProps.input));
+			window.localStorage.setItem(localStorageKey, JSON.stringify(appProps.input));
 		}
-		appProps.output = simulator.Simulate(model, simulator.FixedDataSolution(appProps.input));
+		appProps.output = simulator.Simulate(theModel, simulator.FixedDataSolution(appProps.input));
 	}
 
 	//check localstorage
 	function getLocalDataOrDefault(){
 		var input;
 		if(window.localStorage){
-			var data = window.localStorage.getItem("challenge-data");
+			var data = window.localStorage.getItem(localStorageKey);
 			try{
 				input = JSON.parse(data);
 			}catch(e){
@@ -393,7 +400,7 @@ function init(appContainerDOMNode){
 		}
 		if(!input){
 			//generate default data.
-			var i = model.Weeks;
+			var i = theModel.Weeks;
 			input = [];
 			while(i--){
 				input.push({
@@ -410,7 +417,11 @@ function init(appContainerDOMNode){
 
 //bootstrap the App
 window.onload = function(){
-	init(document.getElementById("app"));
+	var version =1;
+	try{
+		version = window.location.href.match(/index\.v([0-9]+)\.html/)[1];
+	}catch(e){}
+	init(document.getElementById("app"), version);
 };
 },{"./App":1,"./model":9,"./simulator":10,"react":158}],7:[function(require,module,exports){
 "use strict";
@@ -535,7 +546,7 @@ module.exports.Validate = function(instructions, model){
 //calculate the cost from an instructionSet (we assume it passed validation)
 module.exports.Cost = function(instructions, model){
 	return (
-		(instructions.Acquisitions * model.AcquisitionCost) + //acquisitions cost, plus...
+		model.AcquisitionCost(instructions.Acquisitions) + //acquisitions cost, plus...
 		["Marketing", "Engineering"].map(function(key){ //for Marketing and Engineering
 			return instructions[key].map(function(task){ //map to cost of each task
 				return model[key][task].cost;
@@ -545,89 +556,143 @@ module.exports.Cost = function(instructions, model){
 };
 },{"./helpers":7}],9:[function(require,module,exports){
 "use strict";
+
+function bumpPercent(bump, max){
+	return function(current){
+		return Math.min(current+bump, max);
+	};
+}
+
+function dropPercent(drop){
+	return function(current){
+		return Math.max(current-drop, 0);
+	};
+}
+
+function identity(x){ return x; }
+
+function consectutiveDiminishingBump(bump, max, diminishFactor){
+	var lastCalledInWeek = -Infinity, count = 0;
+	return function(value, weekNo){
+		if(lastCalledInWeek +1 === weekNo){
+			//bump count!
+			count++;
+		}else{
+			count = 0;
+		}
+		lastCalledInWeek = weekNo;
+		return Math.min(value + (bump * Math.pow(diminishFactor, count)), max);
+	};
+}
+
 /**
  *	Model Details for StartupChallenge
+ *	each developer
  */
-var model = {
+var model = function(options){
+	options = options||{version: 1};
+	var VERSION = options.version;
+	return {
+		//The Weekly Average users at the start
+		WAU: 97500,
 
-	//The Weekly Average users at the start
-	WAU: 97500,
+		//The budget you have
+		Budget: 1000000,
 
-	//The budget you have
-	Budget: 1000000,
+		//The Initial Retention Value (proportion of WAU that you will keep week on week)
+		Retention: 0.7,
 
-	//The Initial Retention Value (proportion of WAU that you will keep week on week)
-	Retention: 0.7,
+		//The Initial Virality Value (number of organic new visitors as a proportion of existing WAU)
+		Virality: 0.3,
 
-	//The Initial Virality Value (number of organic new visitors as a proportion of existing WAU)
-	Virality: 0.3,
+		//The Initial Conversion Rate (proportion of Visitors that become WAU)
+		Conversion: 0.5,
 
-	//The Initial Conversion Rate (proportion of Visitors that become WAU)
-	Conversion: 0.5,
+		//The number of Weeks the challenge will run over
+		Weeks: 10,
 
-	//The number of Weeks the challenge will run over
-	Weeks: 10,
+		//The developer resource you have for you project
+		DeveloperResource: 2,
 
-	//The developer resource you have for you project
-	DeveloperResource: 2,
-
-	//Marketing Options, Effects are temporary (only in the week they are bought)
-	// can only be bought once in a week
-	Marketing: {
-        "Promoted Posts (virality)": {
-            cost: 25000,
-            target: "Virality",
-            effect: function(Virality){ return Virality + 0.1; } //10% Virality increase (Virality CAN exceed 100%)
-        },
-		"Celebrity Endorsement (retention)": {
-			cost: 25000,
-			target: "Retention",
-			effect: function(Retention){ return Math.min(Retention + 0.1, 1.0); } // 10% Retention increase, (Retention cannot exceed 100%)
+		//Marketing Options, Effects are temporary (only in the week they are bought)
+		// can only be bought once in a week
+		Marketing: {
+			"Promoted Posts (virality)": {
+				cost: 25000,
+				target: "Virality",
+				effect: ({
+					"1": bumpPercent(0.1, +Infinity), //10% Virality increase (Virality CAN exceed 100%)
+					"2": consectutiveDiminishingBump(0.1, +Infinity, 0.5)
+				})[VERSION]
+			},
+			"Celebrity Endorsement (retention)": {
+				cost: 25000,
+				target: "Retention",
+				effect: ({
+					"1": bumpPercent(0.1, 1.0), // 10% Retention increase, (Retention cannot exceed 100%)
+					"2": consectutiveDiminishingBump(0.1, +Infinity, 0.5)
+				})[VERSION]
+			},
+			"PR (signup conversion)": {
+				cost: 25000,
+				target: "Conversion",
+				effect: ({
+					"1": bumpPercent(0.1, 1.0), // 10% Conversion increase (Conversion cannot exceed 100%)
+					"2": consectutiveDiminishingBump(0.1, +Infinity, 0.5)
+				})[VERSION]
+			}
 		},
-		"PR (signup conversion)": {
-			cost: 25000,
-			target: "Conversion",
-			effect: function(Conversion){ return Math.min(Conversion + 0.1, 1.0); } // 10% Conversion increase (Conversion cannot exceed 100%)
+
+		//Acquistion, Get visitors by paying, e.g. Facebook Install Ads
+		//this value is the cost of a single new visitor (not new user)
+		AcquisitionCost: ({
+			"1": function(n){ return n*2.5; }, //version one cost is fixed
+			"2": function(n){
+				//in v2 first 500 cost 2.5, then each further 500 +
+				var costPer = 2.5,
+					totalCost = 0;
+				while(n > 500){
+					totalCost += 500 * costPer;
+					costPer += 0.5;
+					n -= 500;
+				}
+				totalCost += n * costPer;
+				return totalCost;
+			}})[VERSION],
+
+		//Engineering, What to get your developers to do
+		//effects are permanent (unlike marketing)
+		//but each week you don't work on a task, you lose on that task
+		Engineering: {
+			"Product Iteration (virality)": {
+				cost: 5000,
+				target: "Virality",
+				effect: bumpPercent(0.05, +Infinity), // 5% increase in Virality
+				negativeEffect: ({
+					"1": identity,
+					"2": dropPercent(0.025)
+				})[VERSION]
+			},
+			"Bug Fixing (retention)": {
+				cost: 5000,
+				target: "Retention",
+				effect: bumpPercent(0.05, 1.0),
+				negativeEffect: ({
+					"1": identity,
+					"2": dropPercent(0.025)
+				})[VERSION]
+			},
+			"Funnel Optimisation (signup conversion)": {
+				cost: 5000,
+				target: "Conversion",
+				effect: bumpPercent(0.05, 1.0),
+				negativeEffect: ({
+					"1": identity,
+					"2": dropPercent(0.025)
+				})[VERSION]
+			}
 		}
-	},
-
-	//Acquistion, Get visitors by paying, e.g. Facebook Install Ads
-	//this value is the cost of a single new visitor (not new user)
-	AcquisitionCost: 2.5,
-
-	//Engineering, What to get your developers to do
-	//effects are permanent (unlike marketing)
-	Engineering: {
-		"Product Iteration (virality)": {
-			cost: 5000,
-			target: "Virality",
-			effect: function(Virality){
-				return Virality + 0.05; // 5% increase in Virality
-			}
-		},
-		"Bug Fixing (retention)": {
-			cost: 5000,
-			target: "Retention",
-			effect: function(Retention){
-				return Math.min(
-					//Retention + ( (1 - Retention) * 0.2 ), //20% drop in Churn
-					Retention + 0.05,
-					1.0
-				);
-			}
-		},
-		"Funnel Optimisation (signup conversion)": {
-			cost: 5000,
-			target: "Conversion",
-			effect: function(Conversion){
-				return Math.min(
-					//Conversion + ( (1 - Conversion) * 0.2 ), //20% drop in Drop-Off
-					Conversion + 0.05,
-					1.0
-				);
-			}
-		}
-	}
+	};
 };
 
 //export the model
@@ -656,6 +721,7 @@ var Simulate = exports.Simulate = function Simulate(model, solution){
 	//Create our State Object.
 	// we will copy this at each stage, so we have history.
 	var State = {
+		Week: 1,
 		Budget: model.Budget,
 		WAU: model.WAU,
 		Retention: model.Retention,
@@ -683,6 +749,7 @@ var Simulate = exports.Simulate = function Simulate(model, solution){
 			break;
 		}
 		Result.States.push(help.DeepCopy(State));
+		State.Week++;
 	}
 
 	//finally return the results.
@@ -711,9 +778,15 @@ function calculateNextState(state, step, model){
 	state.Budget -= cost;
 
 	//Now working out the next state, first we apply the "permanent" changes (Engineering)
+	//all targets drop first, then we add.
+	Object.keys(model.Engineering).forEach(function(task){
+		var op = model.Engineering[task];
+		state[op.target] = op.negativeEffect(state[op.target]);
+	});
+	//then add developer time.
 	stepInstructions.Engineering.forEach(function(task){
 		var op = model.Engineering[task];
-		state[op.target] = op.effect(state[op.target]);
+		state[op.target] = op.effect(state[op.target], state.Week);
 	});
 
 	//Now we work out the modifier effects (Marketing), but first reset
@@ -724,7 +797,7 @@ function calculateNextState(state, step, model){
 	//this applies the marketing instructions to the tempMetrics
 	stepInstructions.Marketing.forEach(function(task){
 		var op = model.Marketing[task];
-		state["Modified"+op.target] = op.effect(state[op.target]);
+		state["Modified"+op.target] = op.effect(state[op.target], state.Week);
 	});
 
 	//keep a note of the original WAU

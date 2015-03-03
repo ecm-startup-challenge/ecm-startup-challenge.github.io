@@ -630,7 +630,7 @@ var model = function(options){
 				target: "Retention",
 				effect: ({
 					"1": bumpPercent(0.1, 1.0), // 10% Retention increase, (Retention cannot exceed 100%)
-					"2": consectutiveDiminishingBump(0.1, +Infinity, 0.5)
+					"2": consectutiveDiminishingBump(0.1, 1.0, 0.5)
 				})[VERSION]
 			},
 			"PR (signup conversion)": {
@@ -638,7 +638,7 @@ var model = function(options){
 				target: "Conversion",
 				effect: ({
 					"1": bumpPercent(0.1, 1.0), // 10% Conversion increase (Conversion cannot exceed 100%)
-					"2": consectutiveDiminishingBump(0.1, +Infinity, 0.5)
+					"2": consectutiveDiminishingBump(0.1, 1.0, 0.5)
 				})[VERSION]
 			}
 		},
